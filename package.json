@@ -1,0 +1,19 @@
+{
+  "name": "db_test",
+  "version": "1.0.0",
+  "description": "機器校正の見積作成時に入力された校正内容に基づき、料金マスタを自動的に参照し、正確な基本料金および点数料金を算出するシステムです。",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"bgBlue.bold,bgMagenta.bold\" \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
