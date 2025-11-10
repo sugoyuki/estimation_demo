@@ -64,6 +64,7 @@ const createRule = async (req, res) => {
   try {
     const {
       service_id,
+      field_cd,
       resolution,
       range1_name, range1_min, range1_max, range1_min_unit, range1_max_unit,
       range1_min_included, range1_max_included,
@@ -92,6 +93,7 @@ const createRule = async (req, res) => {
 
     const newRule = await MRuleGeneral.create({
       service_id,
+      field_cd,
       resolution,
       range1_name, range1_min, range1_max, range1_min_unit, range1_max_unit,
       range1_min_included: range1_min_included !== undefined ? range1_min_included : true,

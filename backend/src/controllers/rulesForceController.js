@@ -64,7 +64,9 @@ const createRule = async (req, res) => {
   try {
     const {
       service_id,
+      field_cd,
       range1_name, range1_min, range1_max, range1_min_unit, range1_max_unit,
+      range1_min_included, range1_max_included,
       range2_name, range2_value,
       base_fee,
       point_fee,
@@ -90,7 +92,10 @@ const createRule = async (req, res) => {
 
     const newRule = await MRuleForce.create({
       service_id,
+      field_cd,
       range1_name, range1_min, range1_max, range1_min_unit, range1_max_unit,
+      range1_min_included: range1_min_included !== undefined ? range1_min_included : true,
+      range1_max_included: range1_max_included !== undefined ? range1_max_included : true,
       range2_name, range2_value,
       base_fee: base_fee || 0.00,
       point_fee,

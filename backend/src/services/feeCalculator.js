@@ -170,7 +170,7 @@ class FeeCalculator {
   }
 
   /**
-   * 力学分野の料金計算
+   * 力学分野の料金計算（境界値判定対応）
    */
   async calculateForceFee(service_id, force_range1_value, force_range2_value) {
     if (force_range1_value === undefined || force_range1_value === null) {
@@ -188,11 +188,16 @@ class FeeCalculator {
 
     // 各ルールに対して判定
     for (const rule of rules) {
-      // Range1の数値判定（荷重など）
-      if (rule.range1_min !== null && force_range1_value < rule.range1_min) {
-        continue;
-      }
-      if (rule.range1_max !== null && force_range1_value > rule.range1_max) {
+      // Range1の境界値判定（荷重など）
+      const range1Match = this.checkRangeMatch(
+        force_range1_value,
+        rule.range1_min,
+        rule.range1_max,
+        rule.range1_min_included,
+        rule.range1_max_included
+      );
+
+      if (!range1Match) {
         continue;
       }
 
@@ -209,10 +214,16 @@ class FeeCalculator {
         point_fee: parseFloat(rule.point_fee),
         details: {
           rule_id: rule.rule_id,
+          field_cd: rule.field_cd,
           range1_name: rule.range1_name,
-          applied_range1: rule.range1_min !== null || rule.range1_max !== null
-            ? `${rule.range1_min || '0'} - ${rule.range1_max || '∞'} ${rule.range1_max_unit || ''}`
-            : 'N/A',
+          applied_range1: this.formatRange(
+            rule.range1_min,
+            rule.range1_max,
+            rule.range1_min_unit,
+            rule.range1_max_unit,
+            rule.range1_min_included,
+            rule.range1_max_included
+          ),
           range2_name: rule.range2_name,
           applied_range2: rule.range2_value || 'N/A',
           base_fee_value: rule.base_fee,

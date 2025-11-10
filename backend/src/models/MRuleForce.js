@@ -15,6 +15,11 @@ const MRuleForce = sequelize.define('MRuleForce', {
       key: 'service_id'
     }
   },
+  field_cd: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '分野コード（例：力1、力2）'
+  },
   // 範囲1（荷重など）
   range1_name: {
     type: DataTypes.STRING(100),
@@ -29,6 +34,11 @@ const MRuleForce = sequelize.define('MRuleForce', {
     type: DataTypes.STRING(50),
     allowNull: true
   },
+  range1_min_included: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    comment: '1=含む(>=)、0=含まない(>)'
+  },
   range1_max: {
     type: DataTypes.DECIMAL(15, 6),
     allowNull: true
@@ -36,6 +46,11 @@ const MRuleForce = sequelize.define('MRuleForce', {
   range1_max_unit: {
     type: DataTypes.STRING(50),
     allowNull: true
+  },
+  range1_max_included: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+    comment: '1=含む(<=)、0=含まない(<)'
   },
   // 範囲2（荷重方向など）
   range2_name: {

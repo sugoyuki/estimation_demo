@@ -9,11 +9,14 @@ function RulesForce() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     service_id: '',
+    field_cd: '',
     range1_name: '荷重',
     range1_min: '',
     range1_min_unit: 'N',
+    range1_min_included: true,
     range1_max: '',
     range1_max_unit: 'N',
+    range1_max_included: true,
     range2_name: '荷重方向',
     range2_value: '',
     base_fee: 0,
@@ -72,11 +75,14 @@ function RulesForce() {
   const handleEdit = (rule) => {
     setFormData({
       service_id: rule.service_id,
+      field_cd: rule.field_cd || '',
       range1_name: rule.range1_name || '荷重',
       range1_min: rule.range1_min || '',
       range1_min_unit: rule.range1_min_unit || 'N',
+      range1_min_included: rule.range1_min_included !== false,
       range1_max: rule.range1_max || '',
       range1_max_unit: rule.range1_max_unit || 'N',
+      range1_max_included: rule.range1_max_included !== false,
       range2_name: rule.range2_name || '荷重方向',
       range2_value: rule.range2_value || '',
       base_fee: rule.base_fee || 0,
@@ -104,11 +110,14 @@ function RulesForce() {
   const resetForm = () => {
     setFormData({
       service_id: '',
+      field_cd: '',
       range1_name: '荷重',
       range1_min: '',
       range1_min_unit: 'N',
+      range1_min_included: true,
       range1_max: '',
       range1_max_unit: 'N',
+      range1_max_included: true,
       range2_name: '荷重方向',
       range2_value: '',
       base_fee: 0,
@@ -119,11 +128,13 @@ function RulesForce() {
     setShowForm(false);
   };
 
-  const formatRange1 = (min, max, minUnit, maxUnit) => {
+  const formatRange1 = (min, max, minUnit, maxUnit, minIncluded, maxIncluded) => {
     if (!min && !max) return 'N/A';
+    const minBracket = minIncluded ? '[' : '(';
+    const maxBracket = maxIncluded ? ']' : ')';
     const minStr = min ? `${min}${minUnit || ''}` : '-∞';
     const maxStr = max ? `${max}${maxUnit || ''}` : '∞';
-    return `${minStr} ~ ${maxStr}`;
+    return `${minBracket}${minStr}, ${maxStr}${maxBracket}`;
   };
 
   if (loading) return <div>読み込み中...</div>;
@@ -158,6 +169,16 @@ function RulesForce() {
             </select>
           </div>
 
+          <div className="form-group">
+            <label>分野Cd</label>
+            <input
+              type="text"
+              value={formData.field_cd}
+              onChange={(e) => setFormData({ ...formData, field_cd: e.target.value })}
+              placeholder="例: 力1"
+            />
+          </div>
+
           <fieldset className="form-section">
             <legend>範囲1（荷重など）</legend>
 
@@ -190,6 +211,16 @@ function RulesForce() {
                   placeholder="N"
                 />
               </div>
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={formData.range1_min_included}
+                    onChange={(e) => setFormData({ ...formData, range1_min_included: e.target.checked })}
+                  />
+                  含む (>=)
+                </label>
+              </div>
             </div>
 
             <div className="form-row">
@@ -210,6 +241,16 @@ function RulesForce() {
                   onChange={(e) => setFormData({ ...formData, range1_max_unit: e.target.value })}
                   placeholder="N"
                 />
+              </div>
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={formData.range1_max_included}
+                    onChange={(e) => setFormData({ ...formData, range1_max_included: e.target.checked })}
+                  />
+                  含む (&lt;=)
+                </label>
               </div>
             </div>
           </fieldset>
@@ -290,6 +331,7 @@ function RulesForce() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>分野Cd</th>
               <th>サービス</th>
               <th>範囲1名称</th>
               <th>範囲1</th>
@@ -305,6 +347,7 @@ function RulesForce() {
             {rules.map((rule) => (
               <tr key={rule.rule_id}>
                 <td>{rule.rule_id}</td>
+                <td>{rule.field_cd || '-'}</td>
                 <td>{rule.service?.equipment_name || 'N/A'}</td>
                 <td>{rule.range1_name || '-'}</td>
                 <td>
@@ -312,7 +355,9 @@ function RulesForce() {
                     rule.range1_min,
                     rule.range1_max,
                     rule.range1_min_unit,
-                    rule.range1_max_unit
+                    rule.range1_max_unit,
+                    rule.range1_min_included,
+                    rule.range1_max_included
                   )}
                 </td>
                 <td>{rule.range2_name || '-'}</td>

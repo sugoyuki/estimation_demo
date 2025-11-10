@@ -9,6 +9,7 @@ function RulesGeneral() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     service_id: '',
+    field_cd: '',
     resolution: '',
     range1_name: '測定範囲',
     range1_min: '',
@@ -80,6 +81,7 @@ function RulesGeneral() {
   const handleEdit = (rule) => {
     setFormData({
       service_id: rule.service_id,
+      field_cd: rule.field_cd || '',
       resolution: rule.resolution || '',
       range1_name: rule.range1_name || '測定範囲',
       range1_min: rule.range1_min || '',
@@ -119,6 +121,7 @@ function RulesGeneral() {
   const resetForm = () => {
     setFormData({
       service_id: '',
+      field_cd: '',
       resolution: '',
       range1_name: '測定範囲',
       range1_min: '',
@@ -180,6 +183,16 @@ function RulesGeneral() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-group">
+            <label>分野Cd</label>
+            <input
+              type="text"
+              value={formData.field_cd}
+              onChange={(e) => setFormData({ ...formData, field_cd: e.target.value })}
+              placeholder="例: 汎用001"
+            />
           </div>
 
           <div className="form-group">
@@ -378,6 +391,7 @@ function RulesGeneral() {
           <thead>
             <tr>
               <th>ID</th>
+              <th>分野Cd</th>
               <th>サービス</th>
               <th>分解能</th>
               <th>範囲1</th>
@@ -391,6 +405,7 @@ function RulesGeneral() {
             {rules.map((rule) => (
               <tr key={rule.rule_id}>
                 <td>{rule.rule_id}</td>
+                <td>{rule.field_cd || '-'}</td>
                 <td>{rule.service?.equipment_name || 'N/A'}</td>
                 <td>{rule.resolution || '-'}</td>
                 <td>

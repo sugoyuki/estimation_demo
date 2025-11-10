@@ -15,6 +15,11 @@ const MRuleGeneral = sequelize.define('MRuleGeneral', {
       key: 'service_id'
     }
   },
+  field_cd: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: '分野コード（例：汎用001、汎用002）'
+  },
   resolution: {
     type: DataTypes.STRING(100),
     allowNull: true,
