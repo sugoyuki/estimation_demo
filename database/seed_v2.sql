@@ -1,139 +1,194 @@
--- テストデータ投入スクリプト v2.0
--- Excel仕様準拠版
+-- ===================================
+-- 校正料金自動算出システム
+-- テストデータ投入スクリプト v3.0
+-- 新スキーマ対応版（field_id + field_number）
+-- ===================================
+--
+-- 生成日: 2025-11-17
+-- データ: 87サービス、6分野
+--
 
 -- ===================================
--- M_Services: 共通校正項目マスタ
+-- M_Fields: 分野マスタ
 -- ===================================
 
--- 熱学001: ガラス製温度計
-INSERT INTO M_Services (service_id, revenue_category, field, equipment_name, equipment_type1, equipment_type2, combination, main_option, option_name, calibration_item, method) VALUES
-(1, '熱学', '一般', 'ガラス製温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL);
+INSERT INTO m_fields (field_id, field_name, revenue_category, rule_table_type, is_active) VALUES
+(1, '温度', '熱学', 'general', true),
+(2, '湿度', '熱学', 'general', true),
+(3, '体積', '力学', 'general', true),
+(4, '力', '力学', 'force', true),
+(5, '圧力', '力学', 'general', true),
+(6, '質量', '力学', 'general', true);
 
--- 熱学002: 温度計
-INSERT INTO M_Services (service_id, revenue_category, field, equipment_name, equipment_type1, equipment_type2, combination, main_option, option_name, calibration_item, method) VALUES
-(2, '熱学', '一般', '温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL);
+-- シーケンスをリセット
+SELECT setval('m_fields_field_id_seq', 6, true);
 
--- 熱学003: 表面温度計
-INSERT INTO M_Services (service_id, revenue_category, field, equipment_name, equipment_type1, equipment_type2, combination, main_option, option_name, calibration_item, method) VALUES
-(3, '熱学', '一般', '表面温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL);
-
--- 熱学011: 熱電対（シース、E、センサ単体）
-INSERT INTO M_Services (service_id, revenue_category, field, equipment_name, equipment_type1, equipment_type2, combination, main_option, option_name, calibration_item, method) VALUES
-(11, '熱学', '一般', '熱電対', 'シース', 'E', 'センサ単体', 'メイン', NULL, '熱起電力', NULL);
-
--- 力学012: 力計（荷重）
-INSERT INTO M_Services (service_id, revenue_category, field, equipment_name, equipment_type1, equipment_type2, combination, main_option, option_name, calibration_item, method) VALUES
-(12, '熱学', '力学', '力計', NULL, NULL, NULL, NULL, NULL, '荷重', 'JIS B7728, JIS B7602, JIS B 7721');
 
 -- ===================================
--- M_Rules_General: 一般分野料金ルール
+-- M_Services: サービスマスタ (87件)
+-- ===================================
+-- field_id=1: 温度 (32件)
+-- field_id=2: 湿度 (6件)
+-- field_id=3: 体積 (11件)
+-- field_id=4: 力 (4件)
+-- field_id=5: 圧力 (26件)
+-- field_id=6: 質量 (8件)
+
+INSERT INTO m_services (service_id, field, equipment_name, equipment_type1, equipment_type2, combination, main_option, option_name, calibration_item, method, is_active, field_id, field_number) VALUES
+(1, '一般', 'ガラス製温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 1),
+(2, '一般', '温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 2),
+(3, '一般', '表面温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 3),
+(4, '一般', '放射温度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 4),
+(5, '一般', '赤外線サーモグラフィ', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 5),
+(6, '一般', '白金測温抵抗体', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', '比較校正', true, 1, 6),
+(7, '一般', '白金測温抵抗体', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', '定点測定 すず点', true, 1, 7),
+(8, '一般', '白金測温抵抗体', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', '定点測定 亜鉛点', true, 1, 8),
+(9, '一般', '白金測温抵抗体', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', '定点測定 アルミ点', true, 1, 9),
+(10, '一般', '熱電対', 'シース', NULL, 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 10),
+(11, '一般', '熱電対', 'シース', NULL, 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 11),
+(12, '一般', '熱電対', 'シース', NULL, 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 12),
+(13, '一般', '熱電対', 'シース', NULL, 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 13),
+(14, '一般', '熱電対', 'シース', NULL, 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 14),
+(15, '一般', '熱電対', 'シース', NULL, 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 15),
+(20, '一般', '熱電対', 'シース', 'S', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 16),
+(21, '一般', '熱電対', '素線', 'E', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 17),
+(22, '一般', '熱電対', '素線', 'K', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 18),
+(23, '一般', '熱電対', '素線', 'R', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 19),
+(24, '一般', '熱電対', '素線', 'N', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 20),
+(25, '一般', '熱電対', '素線', 'J', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 21),
+(26, '一般', '熱電対', '素線', 'T', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 22),
+(27, '一般', '熱電対', '素線', 'S', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 23),
+(28, '一般', '熱電対', '表面用', 'E', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 24),
+(29, '一般', '熱電対', '表面用', 'K', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 25),
+(30, '一般', '熱電対', '表面用', 'R', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 26),
+(31, '一般', '熱電対', '表面用', 'N', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 27),
+(32, '一般', '熱電対', '表面用', 'J', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 28),
+(33, '一般', '熱電対', '表面用', 'T', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 29),
+(34, '一般', '熱電対', '表面用', 'S', 'センサ単体', 'メイン', NULL, '熱起電力', NULL, true, 1, 30),
+(41, '一般', '基準接点補償器', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 31),
+(42, '一般', '黒体炉', NULL, NULL, '組み合わせ', 'メイン', NULL, '温度', NULL, true, 1, 32),
+(35, '一般', '露点計', NULL, NULL, '組み合わせ', 'メイン', NULL, '霜点', NULL, true, 2, 1),
+(36, '一般', '露点計', NULL, NULL, '組み合わせ', 'メイン', NULL, '露点', NULL, true, 2, 2),
+(37, '一般', '湿度計', NULL, NULL, '組み合わせ', 'メイン', NULL, '相対湿度', NULL, true, 2, 3),
+(38, '一般', '湿度計', '伸長率法', NULL, '組み合わせ', 'メイン', NULL, '相対湿度', NULL, true, 2, 4),
+(39, '一般', '湿度計', NULL, NULL, '組み合わせ', 'オプション', '温度追加', '温度', NULL, true, 2, 5),
+(40, '一般', '通風乾湿計', NULL, NULL, '組み合わせ', 'メイン', NULL, '相対湿度', NULL, true, 2, 6),
+(43, '一般', 'メスシリンダー', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 1),
+(44, '一般', 'メスフラスコ', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 2),
+(45, '一般', 'ルシャテリエフラスコ', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 3),
+(46, '一般', 'ビュレット', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 4),
+(47, '一般', 'メスピペット', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 5),
+(48, '一般', 'ホールピペット', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 6),
+(49, '一般', 'マイクロピペット', '固定式', NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 7),
+(50, '一般', 'マイクロピペット', '可変式', NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 8),
+(51, '一般', '分注器', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 9),
+(52, '一般', 'マイクロシリンジ', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 10),
+(53, '一般', '注射筒', NULL, NULL, '組み合わせ', 'メイン', NULL, '体積', NULL, true, 3, 11),
+(16, '力学', '力計', '荷重', NULL, NULL, NULL, NULL, NULL, NULL, true, 4, 1),
+(17, '力学', '力計', '荷重', NULL, NULL, NULL, NULL, NULL, NULL, true, 4, 2),
+(18, '力学', '力計', '荷重', NULL, NULL, NULL, NULL, NULL, NULL, true, 4, 3),
+(19, '力学', '力計', '荷重', NULL, NULL, NULL, NULL, NULL, NULL, true, 4, 4),
+(54, '一般', '重錘形圧力天びん', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', '圧力標準器との比較校正', true, 5, 1),
+(55, '一般', '重錘形圧力天びん', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体ゲージ圧力', '圧力標準器との比較校正', true, 5, 2),
+(56, '一般', '重錘形圧力天びん', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体ゲージ圧力', '圧力標準器との比較校正', true, 5, 3),
+(57, '一般', '重錘形圧力天びん', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体ゲージ圧力', 'ピストン直径と重錘質量の測定から発生圧力の算出', true, 5, 4),
+(58, '一般', '液柱形圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, NULL, NULL, true, 5, 5),
+(59, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', '上位標準器との比較校正', true, 5, 6),
+(60, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体ゲージ圧力', '上位標準器との比較校正', true, 5, 7),
+(61, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体ゲージ圧力', '上位標準器との比較校正', true, 5, 8),
+(62, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', NULL, true, 5, 9),
+(63, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体ゲージ圧力', NULL, true, 5, 10),
+(64, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体絶対圧力', NULL, true, 5, 11),
+(65, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体ゲージ圧力', NULL, true, 5, 12),
+(66, '一般', 'デジタル圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体差圧', NULL, true, 5, 13),
+(67, '一般', '圧力センサ.', NULL, NULL, 'センサ単体', 'メイン', NULL, '基準圧力に対する出力（液体ゲージ圧力）', NULL, true, 5, 14),
+(68, '一般', '圧力センサ.', NULL, NULL, 'センサ単体', 'メイン', NULL, '基準圧力に対する出力（気体ゲージ圧力）', NULL, true, 5, 15),
+(69, '一般', '圧力センサ.', NULL, NULL, 'センサ単体', 'メイン', NULL, '基準圧力に対する出力（気体絶対圧力）', NULL, true, 5, 16),
+(70, '一般', '機械式圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', NULL, true, 5, 17),
+(71, '一般', '機械式圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体ゲージ圧力', NULL, true, 5, 18),
+(72, '一般', '機械式圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体絶対圧力', NULL, true, 5, 19),
+(73, '一般', '機械式圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '液体ゲージ圧力', NULL, true, 5, 20),
+(74, '一般', '機械式圧力計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体差圧', NULL, true, 5, 21),
+(75, '一般', '真空計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', NULL, true, 5, 22),
+(76, '一般', 'フォルタン式気圧計', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', NULL, true, 5, 23),
+(77, '一般', '配管の接続できない圧力計（気圧計等）', NULL, NULL, '組み合わせ', 'メイン', NULL, '気体絶対圧力', NULL, true, 5, 24),
+(78, '一般', '標準リーク', NULL, NULL, '組み合わせ', 'メイン', NULL, 'リーク量', NULL, true, 5, 25),
+(79, '一般', 'リークディテクタ', NULL, NULL, '組み合わせ', 'メイン', NULL, 'リーク量', NULL, true, 5, 26),
+(80, '一般', '分銅・おもり', NULL, NULL, '組み合わせ', 'メイン', NULL, '質量', NULL, true, 6, 1),
+(81, '一般', '非自動はかり ', '機械式', NULL, '組み合わせ', 'メイン', NULL, '質量', NULL, true, 6, 2),
+(82, '一般', '非自動はかり ', '電子式', NULL, '組み合わせ', 'メイン', NULL, '質量', NULL, true, 6, 3),
+(83, '一般', '非自動はかり ', NULL, NULL, '組み合わせ', 'オプション', '最小計量値証明サービス', '質量', NULL, true, 6, 4),
+(84, '一般', '等比天びん', '感量0.1mg以下またはひょう量1/50万以下', NULL, '組み合わせ', 'メイン', NULL, '性能', NULL, true, 6, 5),
+(85, '一般', '等比天びん', '感量0.1mg超かつひょう量1/50万超', NULL, '組み合わせ', 'メイン', NULL, '性能', NULL, true, 6, 6),
+(86, '一般', '直示天びん', NULL, NULL, '組み合わせ', 'メイン', NULL, '質量', NULL, true, 6, 7),
+(87, '一般', '手ばかり', NULL, NULL, '組み合わせ', 'メイン', NULL, '質量', NULL, true, 6, 8);
+
+-- シーケンスをリセット
+SELECT setval('m_services_service_id_seq', 87, true);
+
+
+-- ===================================
+-- M_Rules_General: 一般分野料金ルール (17件)
+-- ===================================
+-- Note: CSVには約268件のルールがありますが、ここでは基本的なルールのみを投入
+
+INSERT INTO m_rules_general (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee, is_active) VALUES
+(1, '0.1℃以下', '温度', -100, '℃', true, 0, '℃', true, 3300, true),
+(1, '0.1℃以下', '温度', 0, '℃', true, 100, '℃', true, 2700, true),
+(1, '0.1℃以下', '温度', 100, '℃', true, 200, '℃', true, 3000, true),
+(1, '0.1℃以下', '温度', 200, '℃', true, 300, '℃', true, 3300, true),
+(1, '0.1℃以下', '温度', 300, '℃', true, 500, '℃', true, 4300, true),
+(1, '0.2℃以上', '温度', -100, '℃', true, 0, '℃', true, 2200, true),
+(1, '0.2℃以上', '温度', 0, '℃', true, 100, '℃', true, 1800, true),
+(1, '0.2℃以上', '温度', 100, '℃', true, 200, '℃', true, 2000, true),
+(1, '0.2℃以上', '温度', 200, '℃', true, 300, '℃', true, 2200, true),
+(1, '0.2℃以上', '温度', 300, '℃', true, 500, '℃', true, 3300, true),
+(2, '-', '温度', -195.8, '℃', true, -195.8, '℃', true, 0, true),
+(2, '0.01℃以下', '温度', -100, '℃', true, 0, '℃', true, 6500, true),
+(2, '0.01℃以下', '温度', 0, '℃', true, 100, '℃', true, 5400, true),
+(2, '0.01℃以下', '温度', 100, '℃', true, 250, '℃', true, 5900, true),
+(2, '0.01℃以下', '温度', 250, '℃', true, 500, '℃', true, 6500, true),
+(2, '0.01℃以下', '温度', 500, '℃', true, 1200, '℃', true, 8500, true),
+(2, '-', '温度', 1200, '℃', true, 1554, '℃', true, 13000, true);
+
+-- シーケンスをリセット
+SELECT setval('m_rules_general_rule_id_seq', 17, true);
+
+-- ===================================
+-- M_Rules_Force: 力学分野料金ルール (18件)
 -- ===================================
 
--- 汎用1: 熱学001（ガラス製温度計）0.1℃以下、温度 -100℃ <= x <= 0℃
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(1, '0.1℃以下', '温度', -100, '℃', TRUE, 0, '℃', TRUE, 6000);
+INSERT INTO m_rules_force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee, is_active) VALUES
+(16, '荷重', 0, 'kN', 2, 'kN', '荷重方向', '片方向', 4000, 39900, true),
+(16, '荷重', 2, 'kN', 20, 'kN', '荷重方向', '片方向', 4500, 44100, true),
+(16, '荷重', 20, 'kN', 100, 'kN', '荷重方向', '片方向', 5800, 57800, true),
+(16, '荷重', 0, 'kN', 2, 'kN', '荷重方向', '両方向', 4000, 79800, true),
+(16, '荷重', 2, 'kN', 20, 'kN', '荷重方向', '両方向', 4200, 88200, true),
+(16, '荷重', 20, 'kN', 100, 'kN', '荷重方向', '両方向', 5500, 115600, true),
+(17, '荷重', 0, 'MN', 1, 'MN', '荷重方向', '-', 6800, 67200, true),
+(17, '荷重', 2, 'MN', 2, 'MN', '荷重方向', '-', 10000, 99800, true),
+(17, '荷重', 20, 'MN', 3, 'MN', '荷重方向', '-', 11600, 116000, true),
+(18, '荷重', 0, 'kN', 2, 'kN', '荷重方向', '片方向', 4000, 39900, true),
+(18, '荷重', 2, 'kN', 20, 'kN', '荷重方向', '片方向', 4500, 44100, true),
+(18, '荷重', 20, 'kN', 100, 'kN', '荷重方向', '片方向', 5800, 57800, true),
+(18, '荷重', 0, 'kN', 2, 'kN', '荷重方向', '両方向', 5400, 54000, true),
+(18, '荷重', 2, 'kN', 20, 'kN', '荷重方向', '両方向', 5900, 58400, true),
+(18, '荷重', 20, 'kN', 100, 'kN', '荷重方向', '両方向', 6500, 64800, true),
+(19, '荷重', 0, 'MN', 1, 'MN', '荷重方向', '-', 8500, 84300, true),
+(19, '荷重', 2, 'MN', 2, 'MN', '荷重方向', '-', 13000, 130000, true),
+(19, '荷重', 20, 'MN', 3, 'MN', '荷重方向', '-', 3300, 32400, true);
 
--- 汎用2: 熱学001（ガラス製温度計）0.1℃以下、温度 0℃ < x <= 100℃
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(1, '0.1℃以下', '温度', 0, '℃', FALSE, 100, '℃', TRUE, 6000);
-
--- 汎用3: 熱学001（ガラス製温度計）0.1℃以下、温度 100℃ < x <= 200℃
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(1, '0.1℃以下', '温度', 100, '℃', FALSE, 200, '℃', TRUE, 6000);
-
--- 汎用4: 熱学001（ガラス製温度計）0.1℃以下、温度 200℃ < x <= 300℃
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(1, '0.1℃以下', '温度', 200, '℃', FALSE, 300, '℃', TRUE, 6000);
-
--- 汎用5: 熱学001（ガラス製温度計）0.1℃以下、温度 300℃ < x <= 500℃
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(1, '0.1℃以下', '温度', 300, '℃', FALSE, 500, '℃', TRUE, 6000);
-
--- 汎用6~10: 熱学001（ガラス製温度計）0.2℃以上
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(1, '0.2℃以上', '温度', -100, '℃', TRUE, 0, '℃', TRUE, 6000),
-(1, '0.2℃以上', '温度', 0, '℃', FALSE, 100, '℃', TRUE, 6000),
-(1, '0.2℃以上', '温度', 100, '℃', FALSE, 200, '℃', TRUE, 6000),
-(1, '0.2℃以上', '温度', 200, '℃', FALSE, 300, '℃', TRUE, 6000),
-(1, '0.2℃以上', '温度', 300, '℃', FALSE, 500, '℃', TRUE, 6000);
-
--- 汎用11~17: 熱学002（温度計）
-INSERT INTO M_Rules_General (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee) VALUES
-(2, '-', '温度', -195.8, '℃', TRUE, -195.8, '℃', TRUE, 0),
-(2, '0.01℃以下', '温度', -100, '℃', TRUE, 0, '℃', TRUE, 5000),
-(2, '0.01℃以下', '温度', 0, '℃', FALSE, 100, '℃', TRUE, 5000),
-(2, '0.01℃以下', '温度', 100, '℃', FALSE, 250, '℃', TRUE, 5000),
-(2, '0.01℃以下', '温度', 250, '℃', FALSE, 500, '℃', TRUE, 5000),
-(2, '0.01℃以下', '温度', 500, '℃', FALSE, 1200, '℃', TRUE, 5000),
-(2, '-', '温度', 1200, '℃', FALSE, 1554, '℃', TRUE, 5000);
+-- シーケンスをリセット
+SELECT setval('m_rules_force_rule_id_seq', 18, true);
 
 -- ===================================
--- M_Rules_Force: 力学分野料金ルール
+-- 完了メッセージ
 -- ===================================
-
--- 力1: 力学012（力計）荷重 0kN~2kN、荷重方向 片方向
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 0, 'kN', 2, 'kN', '荷重方向', '片方向', 4000, 39900);
-
--- 力2: 力学012（力計）荷重 2kN~20kN、荷重方向 片方向
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 2, 'kN', 20, 'kN', '荷重方向', '片方向', 4500, 44100);
-
--- 力3: 力学012（力計）荷重 20kN~100kN、荷重方向 片方向
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 20, 'kN', 100, 'kN', '荷重方向', '片方向', 5800, 57800);
-
--- 力4: 力学012（力計）荷重 0kN~2kN、荷重方向 両方向
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 0, 'kN', 2, 'kN', '荷重方向', '両方向', 4000, 79800);
-
--- 力5: 力学012（力計）荷重 2kN~20kN、荷重方向 両方向
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 2, 'kN', 20, 'kN', '荷重方向', '両方向', 4200, 88200);
-
--- 力6: 力学012（力計）荷重 20kN~100kN、荷重方向 両方向
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 20, 'kN', 100, 'kN', '荷重方向', '両方向', 5500, 115600);
-
--- 力7~9: ASTM E74など他の手法
-INSERT INTO M_Rules_Force (service_id, range1_name, range1_min, range1_min_unit, range1_max, range1_max_unit, range2_name, range2_value, point_fee, base_fee) VALUES
-(12, '荷重', 0, 'MN', 1, 'MN', '荷重方向', '-', 6800, 67200),
-(12, '荷重', 2, 'MN', 2, 'MN', '荷重方向', '-', 10000, 99800),
-(12, '荷重', 20, 'MN', 3, 'MN', '荷重方向', '-', 11600, 116000);
-
--- ===================================
--- T_Calibration_Requests: サンプル見積
--- ===================================
-
-INSERT INTO T_Calibration_Requests (request_number, customer_name, request_date, status, notes) VALUES
-('EST-2025-001', '株式会社テスト', '2025-11-10', 'draft', 'Excel仕様準拠版のテストデータ');
-
--- ===================================
--- T_Calibration_Items: サンプル見積明細
--- ===================================
-
--- 見積明細: ガラス製温度計（一般分野）
-INSERT INTO T_Calibration_Items (request_id, service_id, item_name, manufacturer, model_number, serial_number, quantity, point_count, range1_value, base_fee, point_fee, subtotal) VALUES
-(1, 1, 'ガラス製温度計', 'EXAMPLE', 'GT-100', 'S001', 1, 5, 50, 0, 6000, 30000);
-
--- 見積明細: 力計（力学分野）
-INSERT INTO T_Calibration_Items (request_id, service_id, item_name, manufacturer, model_number, serial_number, quantity, point_count, force_range1_value, force_range2_value, base_fee, point_fee, subtotal) VALUES
-(1, 12, '力計', 'FORCE Inc.', 'FC-50', 'F001', 1, 10, 10, '片方向', 44100, 4500, 89100);
-
--- 見積合計金額の更新
-UPDATE T_Calibration_Requests
-SET total_amount = (
-    SELECT COALESCE(SUM(subtotal), 0)
-    FROM T_Calibration_Items
-    WHERE request_id = T_Calibration_Requests.request_id
-);
-
--- ===================================
--- データ確認用クエリ
--- ===================================
-
--- SELECT * FROM M_Services;
--- SELECT * FROM M_Rules_General ORDER BY service_id, range1_min;
--- SELECT * FROM M_Rules_Force ORDER BY service_id, range1_min;
--- SELECT * FROM T_Calibration_Requests;
--- SELECT * FROM T_Calibration_Items;
+-- データ投入完了
+-- - M_Fields: 6分野
+-- - M_Services: 87サービス
+-- - M_Rules_General: 17ルール (基本データのみ)
+-- - M_Rules_Force: 18ルール (全データ)
+--
+-- 注意: 一般分野のルールは基本的なものだけです。
+-- 完全なルールデータが必要な場合は、CSVから追加で投入してください。
