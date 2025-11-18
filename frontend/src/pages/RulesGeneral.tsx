@@ -43,7 +43,10 @@ function RulesGeneral() {
         rulesGeneralApi.getAll(),
         servicesApi.getAll({ field: '一般' })
       ]);
-      setRules(rulesRes.data.data || []);
+      const rulesData = rulesRes.data.data || [];
+      // IDの順番にソート
+      rulesData.sort((a, b) => a.rule_id - b.rule_id);
+      setRules(rulesData);
       setServices(servicesRes.data.data || []);
       setError(null);
     } catch (err) {
@@ -230,7 +233,7 @@ function RulesGeneral() {
                 <label>最小値</label>
                 <input
                   type="number"
-                  step="any"
+                  step="0.01"
                   value={formData.range1_min}
                   onChange={(e) => setFormData({ ...formData, range1_min: e.target.value })}
                 />
@@ -261,7 +264,7 @@ function RulesGeneral() {
                 <label>最大値</label>
                 <input
                   type="number"
-                  step="any"
+                  step="0.01"
                   value={formData.range1_max}
                   onChange={(e) => setFormData({ ...formData, range1_max: e.target.value })}
                 />
@@ -305,7 +308,7 @@ function RulesGeneral() {
                 <label>最小値</label>
                 <input
                   type="number"
-                  step="any"
+                  step="0.01"
                   value={formData.range2_min}
                   onChange={(e) => setFormData({ ...formData, range2_min: e.target.value })}
                 />
@@ -335,7 +338,7 @@ function RulesGeneral() {
                 <label>最大値</label>
                 <input
                   type="number"
-                  step="any"
+                  step="0.01"
                   value={formData.range2_max}
                   onChange={(e) => setFormData({ ...formData, range2_max: e.target.value })}
                 />
@@ -367,7 +370,6 @@ function RulesGeneral() {
               type="number"
               value={formData.point_fee}
               onChange={(e) => setFormData({ ...formData, point_fee: e.target.value })}
-              step="0.01"
               required
             />
           </div>
@@ -378,7 +380,6 @@ function RulesGeneral() {
               type="number"
               value={formData.base_fee}
               onChange={(e) => setFormData({ ...formData, base_fee: e.target.value })}
-              step="0.01"
               required
             />
           </div>
@@ -411,6 +412,7 @@ function RulesGeneral() {
             <tr>
               <th>ID</th>
               <th>サービス</th>
+              <th>サービスID</th>
               <th>分解能</th>
               <th>範囲1名称</th>
               <th>範囲1</th>
@@ -438,6 +440,7 @@ function RulesGeneral() {
                     </>
                   ) : 'N/A'}
                 </td>
+                <td>{rule.service_id}</td>
                 <td>{rule.resolution || '-'}</td>
                 <td>{rule.range1_name || '-'}</td>
                 <td>

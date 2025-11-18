@@ -23,7 +23,7 @@ const MRuleForce = sequelize.define<MRuleForceInstance>('MRuleForce', {
     comment: '範囲1名称（例：荷重）'
   },
   range1_min: {
-    type: DataTypes.DECIMAL(15, 6),
+    type: DataTypes.DECIMAL(15, 2),
     allowNull: true
   },
   range1_min_unit: {
@@ -36,7 +36,7 @@ const MRuleForce = sequelize.define<MRuleForceInstance>('MRuleForce', {
     comment: '1=含む(>=)、0=含まない(>)'
   },
   range1_max: {
-    type: DataTypes.DECIMAL(15, 6),
+    type: DataTypes.DECIMAL(15, 2),
     allowNull: true
   },
   range1_max_unit: {
@@ -60,13 +60,13 @@ const MRuleForce = sequelize.define<MRuleForceInstance>('MRuleForce', {
     comment: '範囲2（例：片方向、両方向、-）'
   },
   point_fee: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.INTEGER,
     allowNull: false,
     comment: '点数料金'
   },
   base_fee: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0.00,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
     comment: '基本料金'
   },
   is_active: {

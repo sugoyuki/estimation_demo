@@ -28,7 +28,7 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
     comment: '範囲1名称'
   },
   range1_min: {
-    type: DataTypes.DECIMAL(15, 6),
+    type: DataTypes.DECIMAL(15, 2),
     allowNull: true
   },
   range1_min_unit: {
@@ -41,7 +41,7 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
     comment: '1=含む(>=)、0=含まない(>)'
   },
   range1_max: {
-    type: DataTypes.DECIMAL(15, 6),
+    type: DataTypes.DECIMAL(15, 2),
     allowNull: true
   },
   range1_max_unit: {
@@ -60,7 +60,7 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
     comment: '範囲2名称'
   },
   range2_min: {
-    type: DataTypes.DECIMAL(15, 6),
+    type: DataTypes.DECIMAL(15, 2),
     allowNull: true
   },
   range2_min_unit: {
@@ -72,7 +72,7 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
     defaultValue: true
   },
   range2_max: {
-    type: DataTypes.DECIMAL(15, 6),
+    type: DataTypes.DECIMAL(15, 2),
     allowNull: true
   },
   range2_max_unit: {
@@ -84,13 +84,13 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
     defaultValue: true
   },
   point_fee: {
-    type: DataTypes.DECIMAL(10, 2),
+    type: DataTypes.INTEGER,
     allowNull: false,
     comment: '点数料金'
   },
   base_fee: {
-    type: DataTypes.DECIMAL(10, 2),
-    defaultValue: 0.00,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
     comment: '基本料金'
   },
   is_active: {

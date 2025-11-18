@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict hicT3KXz5lDb4laFR7rZtMJKprN0yZIdjZT3SwrHk3232ReUkFg9y0dPdor5dU0
+\restrict KXC50qy1DEVU1MhVggXOw1ssFjocBrcBiI35uw5F8ConGGi5mVrxYDrRHkaRruJ
 
 -- Dumped from database version 14.19 (Homebrew)
 -- Dumped by pg_dump version 14.19 (Homebrew)
@@ -114,8 +114,8 @@ CREATE TABLE public.m_rules_force (
     range1_max_unit character varying(50),
     range2_name character varying(100),
     range2_value character varying(100),
-    point_fee numeric(10,2) NOT NULL,
-    base_fee numeric(10,2) DEFAULT 0.00,
+    point_fee integer NOT NULL,
+    base_fee integer DEFAULT 0,
     is_active boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
@@ -187,10 +187,11 @@ CREATE TABLE public.m_rules_general (
     range2_max numeric(15,6),
     range2_max_unit character varying(50),
     range2_max_included boolean DEFAULT true,
-    point_fee numeric(10,2) NOT NULL,
+    point_fee integer NOT NULL,
     is_active boolean DEFAULT true,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    base_fee integer DEFAULT 0
 );
 
 
@@ -674,5 +675,5 @@ ALTER TABLE ONLY public.t_calibration_items
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hicT3KXz5lDb4laFR7rZtMJKprN0yZIdjZT3SwrHk3232ReUkFg9y0dPdor5dU0
+\unrestrict KXC50qy1DEVU1MhVggXOw1ssFjocBrcBiI35uw5F8ConGGi5mVrxYDrRHkaRruJ
 

@@ -26,6 +26,8 @@ function EstimateNew() {
     equipment_type1: '',
     equipment_type2: '',
     combination: '',
+    calibration_item: '',
+    method: '',
     service_id: ''
   });
 
@@ -38,7 +40,9 @@ function EstimateNew() {
     equipmentNames: [],
     equipmentType1: [],
     equipmentType2: [],
-    combinations: []
+    combinations: [],
+    calibrationItems: [],
+    methods: []
   });
 
   // ルール選択状態
@@ -142,6 +146,20 @@ function EstimateNew() {
       );
     }
 
+    // calibration_itemでフィルター
+    if (serviceSelection.calibration_item) {
+      filtered = filtered.filter(s =>
+        (s.calibration_item || '') === serviceSelection.calibration_item
+      );
+    }
+
+    // methodでフィルター
+    if (serviceSelection.method) {
+      filtered = filtered.filter(s =>
+        (s.method || '') === serviceSelection.method
+      );
+    }
+
     setFilteredServices(filtered);
 
     // 利用可能なオプションを抽出
@@ -159,7 +177,7 @@ function EstimateNew() {
         result = result.filter(s => s.fieldInfo?.field_id === parseInt(serviceSelection.field_id));
       }
 
-      if (['equipment_type1', 'equipment_type2', 'combination'].includes(upToKey)) {
+      if (['equipment_type1', 'equipment_type2', 'combination', 'calibration_item', 'method'].includes(upToKey)) {
         if (serviceSelection.field_id) {
           result = result.filter(s => s.fieldInfo?.field_id === parseInt(serviceSelection.field_id));
         }
@@ -168,15 +186,27 @@ function EstimateNew() {
         }
       }
 
-      if (['equipment_type2', 'combination'].includes(upToKey)) {
+      if (['equipment_type2', 'combination', 'calibration_item', 'method'].includes(upToKey)) {
         if (serviceSelection.equipment_type1) {
           result = result.filter(s => (s.equipment_type1 || '') === serviceSelection.equipment_type1);
         }
       }
 
-      if (upToKey === 'combination') {
+      if (['combination', 'calibration_item', 'method'].includes(upToKey)) {
         if (serviceSelection.equipment_type2) {
           result = result.filter(s => (s.equipment_type2 || '') === serviceSelection.equipment_type2);
+        }
+      }
+
+      if (['calibration_item', 'method'].includes(upToKey)) {
+        if (serviceSelection.combination) {
+          result = result.filter(s => (s.combination || '') === serviceSelection.combination);
+        }
+      }
+
+      if (upToKey === 'method') {
+        if (serviceSelection.calibration_item) {
+          result = result.filter(s => (s.calibration_item || '') === serviceSelection.calibration_item);
         }
       }
 
@@ -188,7 +218,9 @@ function EstimateNew() {
       equipmentNames: getUniqueValues('equipment_name'),
       equipmentType1: getUniqueValues('equipment_type1'),
       equipmentType2: getUniqueValues('equipment_type2'),
-      combinations: getUniqueValues('combination')
+      combinations: getUniqueValues('combination'),
+      calibrationItems: getUniqueValues('calibration_item'),
+      methods: getUniqueValues('method')
     });
   };
 
@@ -251,8 +283,14 @@ function EstimateNew() {
       return false;
     });
 
-    // 範囲2がある場合
-    if (range2_value && filtered.some(r => r.range2_min !== null)) {
+    // 範囲2が必要かチェック
+    const hasRange2 = filtered.some(r => r.range2_name && r.range2_min !== null);
+
+    if (hasRange2) {
+      // 範囲2が存在する場合、範囲2値の選択が必須
+      if (!range2_value) {
+        return null; // 範囲2値が未選択の場合はマッチしない
+      }
       const value2 = parseFloat(range2_value);
       filtered = filtered.filter(r => {
         if (r.range2_min !== null && r.range2_max !== null) {
@@ -262,11 +300,11 @@ function EstimateNew() {
           const maxOk = r.range2_max_included ? (value2 <= max) : (value2 < max);
           return minOk && maxOk;
         }
-        return true;
+        return false;
       });
     }
 
-    return filtered.length > 0 ? filtered[0] : null;
+    return filtered.length === 1 ? filtered[0] : null;
   };
 
   // ルールマッチング（力学分野）
@@ -291,12 +329,82 @@ function EstimateNew() {
       return false;
     });
 
-    // 範囲2（名称値）でフィルター
-    if (range2_value) {
+    // 範囲2が必要かチェック
+    const hasRange2 = filtered.some(r => r.range2_name && r.range2_value);
+
+    if (hasRange2) {
+      // 範囲2が存在する場合、範囲2値の選択が必須
+      if (!range2_value) {
+        return null; // 範囲2値が未選択の場合はマッチしない
+      }
+      // 範囲2値でフィルター
       filtered = filtered.filter(r => r.range2_value === range2_value);
     }
 
-    return filtered.length > 0 ? filtered[0] : null;
+    return filtered.length === 1 ? filtered[0] : null;
+  };
+
+  // 利用可能な単位を取得（一般分野 範囲1）
+  const getAvailableRange1Units = () => {
+    const { availableRules, resolution, range1_name } = ruleSelection;
+
+    let filtered = availableRules;
+    if (resolution) {
+      filtered = filtered.filter(r => r.resolution === resolution);
+    }
+    if (range1_name) {
+      filtered = filtered.filter(r => r.range1_name === range1_name);
+    }
+
+    const units = new Set<string>();
+    filtered.forEach(r => {
+      if (r.range1_min_unit) units.add(r.range1_min_unit);
+      if (r.range1_max_unit) units.add(r.range1_max_unit);
+    });
+
+    return Array.from(units);
+  };
+
+  // 利用可能な単位を取得（一般分野 範囲2）
+  const getAvailableRange2Units = () => {
+    const { availableRules, resolution, range1_name, range2_name } = ruleSelection;
+
+    let filtered = availableRules;
+    if (resolution) {
+      filtered = filtered.filter(r => r.resolution === resolution);
+    }
+    if (range1_name) {
+      filtered = filtered.filter(r => r.range1_name === range1_name);
+    }
+    if (range2_name) {
+      filtered = filtered.filter(r => r.range2_name === range2_name);
+    }
+
+    const units = new Set<string>();
+    filtered.forEach(r => {
+      if (r.range2_min_unit) units.add(r.range2_min_unit);
+      if (r.range2_max_unit) units.add(r.range2_max_unit);
+    });
+
+    return Array.from(units);
+  };
+
+  // 利用可能な単位を取得（力学分野 範囲1）
+  const getAvailableForceRange1Units = () => {
+    const { availableRules, range1_name } = ruleSelection;
+
+    let filtered = availableRules;
+    if (range1_name) {
+      filtered = filtered.filter(r => r.range1_name === range1_name);
+    }
+
+    const units = new Set<string>();
+    filtered.forEach(r => {
+      if (r.range1_min_unit) units.add(r.range1_min_unit);
+      if (r.range1_max_unit) units.add(r.range1_max_unit);
+    });
+
+    return Array.from(units);
   };
 
   // 価格計算
@@ -512,7 +620,10 @@ function EstimateNew() {
                     equipment_name: '',
                     equipment_type1: '',
                     equipment_type2: '',
-                    combination: ''
+                    combination: '',
+                    calibration_item: '',
+                    method: '',
+                    service_id: ''
                   });
                 }}
               >
@@ -536,7 +647,9 @@ function EstimateNew() {
                       equipment_name: e.target.value,
                       equipment_type1: '',
                       equipment_type2: '',
-                      combination: ''
+                      combination: '',
+                      calibration_item: '',
+                      method: ''
                     });
                   }}
                 >
@@ -558,7 +671,9 @@ function EstimateNew() {
                       ...serviceSelection,
                       equipment_type1: e.target.value,
                       equipment_type2: '',
-                      combination: ''
+                      combination: '',
+                      calibration_item: '',
+                      method: ''
                     });
                   }}
                 >
@@ -579,7 +694,9 @@ function EstimateNew() {
                     setServiceSelection({
                       ...serviceSelection,
                       equipment_type2: e.target.value,
-                      combination: ''
+                      combination: '',
+                      calibration_item: '',
+                      method: ''
                     });
                   }}
                 >
@@ -599,13 +716,56 @@ function EstimateNew() {
                   onChange={(e) => {
                     setServiceSelection({
                       ...serviceSelection,
-                      combination: e.target.value
+                      combination: e.target.value,
+                      calibration_item: '',
+                      method: ''
                     });
                   }}
                 >
                   <option value="">選択してください</option>
                   {availableOptions.combinations.map((comb, idx) => (
                     <option key={idx} value={comb}>{comb}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {serviceSelection.equipment_name && filteredServices.some(s => s.calibration_item) && (
+              <div className="form-group">
+                <label>校正項目</label>
+                <select
+                  value={serviceSelection.calibration_item}
+                  onChange={(e) => {
+                    setServiceSelection({
+                      ...serviceSelection,
+                      calibration_item: e.target.value,
+                      method: ''
+                    });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {availableOptions.calibrationItems.map((item, idx) => (
+                    <option key={idx} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {serviceSelection.equipment_name && filteredServices.some(s => s.method) && (
+              <div className="form-group">
+                <label>手法</label>
+                <select
+                  value={serviceSelection.method}
+                  onChange={(e) => {
+                    setServiceSelection({
+                      ...serviceSelection,
+                      method: e.target.value
+                    });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {availableOptions.methods.map((method, idx) => (
+                    <option key={idx} value={method}>{method}</option>
                   ))}
                 </select>
               </div>
@@ -675,12 +835,15 @@ function EstimateNew() {
                     </div>
                     <div className="form-group">
                       <label>単位</label>
-                      <input
-                        type="text"
+                      <select
                         value={ruleSelection.range1_unit}
                         onChange={(e) => setRuleSelection({ ...ruleSelection, range1_unit: e.target.value })}
-                        placeholder="℃"
-                      />
+                      >
+                        <option value="">選択してください</option>
+                        {getAvailableRange1Units().map((unit, idx) => (
+                          <option key={idx} value={unit}>{unit}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -711,11 +874,15 @@ function EstimateNew() {
                         </div>
                         <div className="form-group">
                           <label>単位</label>
-                          <input
-                            type="text"
+                          <select
                             value={ruleSelection.range2_unit}
                             onChange={(e) => setRuleSelection({ ...ruleSelection, range2_unit: e.target.value })}
-                          />
+                          >
+                            <option value="">選択してください</option>
+                            {getAvailableRange2Units().map((unit, idx) => (
+                              <option key={idx} value={unit}>{unit}</option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                     </>
@@ -752,12 +919,15 @@ function EstimateNew() {
                     </div>
                     <div className="form-group">
                       <label>単位</label>
-                      <input
-                        type="text"
+                      <select
                         value={ruleSelection.range1_unit}
                         onChange={(e) => setRuleSelection({ ...ruleSelection, range1_unit: e.target.value })}
-                        placeholder="kN"
-                      />
+                      >
+                        <option value="">選択してください</option>
+                        {getAvailableForceRange1Units().map((unit, idx) => (
+                          <option key={idx} value={unit}>{unit}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
