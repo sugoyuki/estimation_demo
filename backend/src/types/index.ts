@@ -65,6 +65,7 @@ export interface MRuleGeneralAttributes {
   range2_max_unit?: string;
   range2_max_included: boolean;
   point_fee: number;
+  base_fee?: number;
   is_active: boolean;
   created_at?: Date;
   updated_at?: Date;

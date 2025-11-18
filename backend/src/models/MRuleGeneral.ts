@@ -88,6 +88,11 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
     allowNull: false,
     comment: '点数料金'
   },
+  base_fee: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0.00,
+    comment: '基本料金'
+  },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
@@ -96,6 +101,6 @@ const MRuleGeneral = sequelize.define<MRuleGeneralInstance>('MRuleGeneral', {
   tableName: 'm_rules_general',
   timestamps: true,
   underscored: true
-});
+});;
 
 export default MRuleGeneral;

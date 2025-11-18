@@ -27,6 +27,7 @@ function RulesGeneral() {
     range2_max_unit: '',
     range2_max_included: true,
     point_fee: 0,
+    base_fee: 0,
     is_active: true
   });
   const [editingId, setEditingId] = useState(null);
@@ -63,7 +64,8 @@ function RulesGeneral() {
         range1_max: formData.range1_max ? parseFloat(formData.range1_max) : null,
         range2_min: formData.range2_min ? parseFloat(formData.range2_min) : null,
         range2_max: formData.range2_max ? parseFloat(formData.range2_max) : null,
-        point_fee: parseFloat(formData.point_fee)
+        point_fee: parseFloat(formData.point_fee),
+        base_fee: parseFloat(formData.base_fee || 0)
       };
 
       if (editingId) {
@@ -100,6 +102,7 @@ function RulesGeneral() {
       range2_max_unit: rule.range2_max_unit || '',
       range2_max_included: rule.range2_max_included !== false,
       point_fee: rule.point_fee,
+      base_fee: rule.base_fee || 0,
       is_active: rule.is_active
     });
     setEditingId(rule.rule_id);
@@ -141,6 +144,7 @@ function RulesGeneral() {
       range2_max_unit: '',
       range2_max_included: true,
       point_fee: 0,
+      base_fee: 0,
       is_active: true
     });
     setEditingId(null);
@@ -369,6 +373,17 @@ function RulesGeneral() {
           </div>
 
           <div className="form-group">
+            <label>基本料金 *</label>
+            <input
+              type="number"
+              value={formData.base_fee}
+              onChange={(e) => setFormData({ ...formData, base_fee: e.target.value })}
+              step="0.01"
+              required
+            />
+          </div>
+
+          <div className="form-group">
             <label>
               <input
                 type="checkbox"
@@ -402,6 +417,7 @@ function RulesGeneral() {
               <th>範囲2名称</th>
               <th>範囲2</th>
               <th>点数料金</th>
+              <th>基本料金</th>
               <th>有効</th>
               <th>操作</th>
             </tr>
@@ -446,6 +462,7 @@ function RulesGeneral() {
                   )}
                 </td>
                 <td>¥{parseFloat(rule.point_fee || 0).toLocaleString()}</td>
+                <td>¥{parseFloat(rule.base_fee || 0).toLocaleString()}</td>
                 <td>{rule.is_active ? '有効' : '無効'}</td>
                 <td>
                   <button onClick={() => handleEdit(rule)} className="btn btn-sm">

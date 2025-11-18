@@ -132,24 +132,24 @@ SELECT setval('m_services_service_id_seq', 87, true);
 -- ===================================
 -- Note: CSVには約268件のルールがありますが、ここでは基本的なルールのみを投入
 
-INSERT INTO m_rules_general (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee, is_active) VALUES
-(1, '0.1℃以下', '温度', -100, '℃', true, 0, '℃', true, 3300, true),
-(1, '0.1℃以下', '温度', 0, '℃', true, 100, '℃', true, 2700, true),
-(1, '0.1℃以下', '温度', 100, '℃', true, 200, '℃', true, 3000, true),
-(1, '0.1℃以下', '温度', 200, '℃', true, 300, '℃', true, 3300, true),
-(1, '0.1℃以下', '温度', 300, '℃', true, 500, '℃', true, 4300, true),
-(1, '0.2℃以上', '温度', -100, '℃', true, 0, '℃', true, 2200, true),
-(1, '0.2℃以上', '温度', 0, '℃', true, 100, '℃', true, 1800, true),
-(1, '0.2℃以上', '温度', 100, '℃', true, 200, '℃', true, 2000, true),
-(1, '0.2℃以上', '温度', 200, '℃', true, 300, '℃', true, 2200, true),
-(1, '0.2℃以上', '温度', 300, '℃', true, 500, '℃', true, 3300, true),
-(2, '-', '温度', -195.8, '℃', true, -195.8, '℃', true, 0, true),
-(2, '0.01℃以下', '温度', -100, '℃', true, 0, '℃', true, 6500, true),
-(2, '0.01℃以下', '温度', 0, '℃', true, 100, '℃', true, 5400, true),
-(2, '0.01℃以下', '温度', 100, '℃', true, 250, '℃', true, 5900, true),
-(2, '0.01℃以下', '温度', 250, '℃', true, 500, '℃', true, 6500, true),
-(2, '0.01℃以下', '温度', 500, '℃', true, 1200, '℃', true, 8500, true),
-(2, '-', '温度', 1200, '℃', true, 1554, '℃', true, 13000, true);
+INSERT INTO m_rules_general (service_id, resolution, range1_name, range1_min, range1_min_unit, range1_min_included, range1_max, range1_max_unit, range1_max_included, point_fee, base_fee, is_active) VALUES
+(1, '0.1℃以下', '温度', -100, '℃', true, 0, '℃', true, 3300, 32400, true),
+(1, '0.1℃以下', '温度', 0, '℃', true, 100, '℃', true, 2700, 27000, true),
+(1, '0.1℃以下', '温度', 100, '℃', true, 200, '℃', true, 3000, 29200, true),
+(1, '0.1℃以下', '温度', 200, '℃', true, 300, '℃', true, 3300, 32400, true),
+(1, '0.1℃以下', '温度', 300, '℃', true, 500, '℃', true, 4300, 42200, true),
+(1, '0.2℃以上', '温度', -100, '℃', true, 0, '℃', true, 2200, 21600, true),
+(1, '0.2℃以上', '温度', 0, '℃', true, 100, '℃', true, 1800, 17300, true),
+(1, '0.2℃以上', '温度', 100, '℃', true, 200, '℃', true, 2000, 19500, true),
+(1, '0.2℃以上', '温度', 200, '℃', true, 300, '℃', true, 2200, 21600, true),
+(1, '0.2℃以上', '温度', 300, '℃', true, 500, '℃', true, 3300, 32400, true),
+(2, '-', '温度', -195.8, '℃', true, -195.8, '℃', true, 0, 40000, true),
+(2, '0.01℃以下', '温度', -100, '℃', true, 0, '℃', true, 6500, 64800, true),
+(2, '0.01℃以下', '温度', 0, '℃', true, 100, '℃', true, 5400, 54000, true),
+(2, '0.01℃以下', '温度', 100, '℃', true, 250, '℃', true, 5900, 58400, true),
+(2, '0.01℃以下', '温度', 250, '℃', true, 500, '℃', true, 6500, 64800, true),
+(2, '0.01℃以下', '温度', 500, '℃', true, 1200, '℃', true, 8500, 84300, true),
+(2, '-', '温度', 1200, '℃', true, 1554, '℃', true, 13000, 130000, true);
 
 -- シーケンスをリセット
 SELECT setval('m_rules_general_rule_id_seq', 17, true);
