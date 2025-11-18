@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { calibrationApi, servicesApi } from '../api/services';
+import { calibrationApi, servicesApi, rulesGeneralApi, rulesForceApi } from '../api/services';
 
 function EstimateNew() {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
+  const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // 見積基本情報
@@ -18,67 +19,370 @@ function EstimateNew() {
   // 明細リスト
   const [items, setItems] = useState([]);
 
+  // サービス選択状態（階層的絞り込み）
+  const [serviceSelection, setServiceSelection] = useState({
+    field_id: '',
+    equipment_name: '',
+    equipment_type1: '',
+    equipment_type2: '',
+    combination: '',
+    service_id: ''
+  });
+
+  // フィルター後のサービスリスト
+  const [filteredServices, setFilteredServices] = useState([]);
+
+  // 選択可能なオプション
+  const [availableOptions, setAvailableOptions] = useState({
+    fields: [],
+    equipmentNames: [],
+    equipmentType1: [],
+    equipmentType2: [],
+    combinations: []
+  });
+
+  // ルール選択状態
+  const [ruleSelection, setRuleSelection] = useState({
+    selectedService: null,
+    availableRules: [],
+    resolution: '',
+    range1_name: '',
+    range1_value: '',
+    range1_unit: '',
+    range2_name: '',
+    range2_value: '',
+    range2_unit: '',
+    matchedRule: null,
+    point_count: 1
+  });
+
   // 新規明細フォーム
   const [newItem, setNewItem] = useState({
-    service_id: '',
     item_name: '',
     manufacturer: '',
     model_number: '',
     serial_number: '',
     quantity: 1,
-    point_count: '',
-    measurement_range_min: '',
-    measurement_range_max: '',
-    measurement_unit: '',
-    capacity_value: '',
-    capacity_unit: '',
     notes: ''
   });
 
   useEffect(() => {
-    fetchServices();
+    fetchInitialData();
   }, []);
 
-  const fetchServices = async () => {
+  // サービス選択が変更されたら、利用可能なオプションを更新
+  useEffect(() => {
+    updateAvailableOptions();
+  }, [services, serviceSelection]);
+
+  const fetchInitialData = async () => {
     try {
-      const response = await servicesApi.getAll({ is_active: true });
-      setServices(response.data.data || []);
+      setLoading(true);
+      const [servicesRes] = await Promise.all([
+        servicesApi.getAll({ is_active: true })
+      ]);
+
+      const servicesData = servicesRes.data.data || [];
+      setServices(servicesData);
+
+      // 分野リストを作成
+      const uniqueFields = Array.from(
+        new Set(servicesData.map(s => s.fieldInfo?.field_id))
+      )
+        .filter(id => id)
+        .map(id => {
+          const service = servicesData.find(s => s.fieldInfo?.field_id === id);
+          return {
+            field_id: id,
+            field_name: service.fieldInfo.field_name,
+            revenue_category: service.fieldInfo.revenue_category
+          };
+        });
+
+      setFields(uniqueFields);
     } catch (err) {
-      console.error('サービス一覧の取得に失敗しました', err);
+      console.error('データ取得に失敗しました', err);
+      alert('データ取得に失敗しました');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleAddItem = () => {
-    if (!newItem.service_id || !newItem.item_name) {
-      alert('サービスと校正品名は必須です');
+  const updateAvailableOptions = () => {
+    // field_idでフィルター
+    let filtered = services;
+
+    if (serviceSelection.field_id) {
+      filtered = filtered.filter(s => s.fieldInfo?.field_id === parseInt(serviceSelection.field_id));
+    }
+
+    // equipment_nameでフィルター
+    if (serviceSelection.equipment_name) {
+      filtered = filtered.filter(s => s.equipment_name === serviceSelection.equipment_name);
+    }
+
+    // equipment_type1でフィルター
+    if (serviceSelection.equipment_type1) {
+      filtered = filtered.filter(s =>
+        (s.equipment_type1 || '') === serviceSelection.equipment_type1
+      );
+    }
+
+    // equipment_type2でフィルター
+    if (serviceSelection.equipment_type2) {
+      filtered = filtered.filter(s =>
+        (s.equipment_type2 || '') === serviceSelection.equipment_type2
+      );
+    }
+
+    // combinationでフィルター
+    if (serviceSelection.combination) {
+      filtered = filtered.filter(s =>
+        (s.combination || '') === serviceSelection.combination
+      );
+    }
+
+    setFilteredServices(filtered);
+
+    // 利用可能なオプションを抽出
+    const getUniqueValues = (key) => {
+      const currentFiltered = getCurrentFilteredServices(key);
+      return Array.from(new Set(currentFiltered.map(s => s[key] || '')))
+        .filter(v => v !== '');
+    };
+
+    // 各フィールドに対して、それより上の階層でフィルターされたサービスから選択肢を抽出
+    const getCurrentFilteredServices = (upToKey) => {
+      let result = services;
+
+      if (upToKey === 'equipment_name' && serviceSelection.field_id) {
+        result = result.filter(s => s.fieldInfo?.field_id === parseInt(serviceSelection.field_id));
+      }
+
+      if (['equipment_type1', 'equipment_type2', 'combination'].includes(upToKey)) {
+        if (serviceSelection.field_id) {
+          result = result.filter(s => s.fieldInfo?.field_id === parseInt(serviceSelection.field_id));
+        }
+        if (serviceSelection.equipment_name) {
+          result = result.filter(s => s.equipment_name === serviceSelection.equipment_name);
+        }
+      }
+
+      if (['equipment_type2', 'combination'].includes(upToKey)) {
+        if (serviceSelection.equipment_type1) {
+          result = result.filter(s => (s.equipment_type1 || '') === serviceSelection.equipment_type1);
+        }
+      }
+
+      if (upToKey === 'combination') {
+        if (serviceSelection.equipment_type2) {
+          result = result.filter(s => (s.equipment_type2 || '') === serviceSelection.equipment_type2);
+        }
+      }
+
+      return result;
+    };
+
+    setAvailableOptions({
+      fields: fields,
+      equipmentNames: getUniqueValues('equipment_name'),
+      equipmentType1: getUniqueValues('equipment_type1'),
+      equipmentType2: getUniqueValues('equipment_type2'),
+      combinations: getUniqueValues('combination')
+    });
+  };
+
+  // サービス選択時にルールを取得
+  const handleServiceSelected = async () => {
+    if (filteredServices.length !== 1) {
+      alert('サービスを一つに絞り込んでください');
       return;
     }
 
-    const selectedService = services.find(s => s.service_id === parseInt(newItem.service_id));
+    const selectedService = filteredServices[0];
+    setRuleSelection(prev => ({ ...prev, selectedService }));
+
+    // ルール取得
+    try {
+      if (selectedService.field === '一般') {
+        const response = await rulesGeneralApi.getAll({ service_id: selectedService.service_id });
+        setRuleSelection(prev => ({
+          ...prev,
+          availableRules: response.data.data || []
+        }));
+      } else if (selectedService.field === '力学') {
+        const response = await rulesForceApi.getAll({ service_id: selectedService.service_id });
+        setRuleSelection(prev => ({
+          ...prev,
+          availableRules: response.data.data || []
+        }));
+      }
+    } catch (err) {
+      console.error('ルール取得に失敗しました', err);
+      alert('ルール取得に失敗しました');
+    }
+  };
+
+  // ルールマッチング（一般分野）
+  const matchGeneralRule = () => {
+    const { selectedService, availableRules, resolution, range1_value, range2_value } = ruleSelection;
+
+    if (!selectedService || !range1_value) {
+      return null;
+    }
+
+    const value1 = parseFloat(range1_value);
+
+    // 分解能でフィルター
+    let filtered = availableRules;
+    if (resolution) {
+      filtered = filtered.filter(r => r.resolution === resolution);
+    }
+
+    // 範囲1で判定
+    filtered = filtered.filter(r => {
+      if (r.range1_min !== null && r.range1_max !== null) {
+        const min = parseFloat(r.range1_min);
+        const max = parseFloat(r.range1_max);
+        const minOk = r.range1_min_included ? (value1 >= min) : (value1 > min);
+        const maxOk = r.range1_max_included ? (value1 <= max) : (value1 < max);
+        return minOk && maxOk;
+      }
+      return false;
+    });
+
+    // 範囲2がある場合
+    if (range2_value && filtered.some(r => r.range2_min !== null)) {
+      const value2 = parseFloat(range2_value);
+      filtered = filtered.filter(r => {
+        if (r.range2_min !== null && r.range2_max !== null) {
+          const min = parseFloat(r.range2_min);
+          const max = parseFloat(r.range2_max);
+          const minOk = r.range2_min_included ? (value2 >= min) : (value2 > min);
+          const maxOk = r.range2_max_included ? (value2 <= max) : (value2 < max);
+          return minOk && maxOk;
+        }
+        return true;
+      });
+    }
+
+    return filtered.length > 0 ? filtered[0] : null;
+  };
+
+  // ルールマッチング（力学分野）
+  const matchForceRule = () => {
+    const { availableRules, range1_value, range2_value } = ruleSelection;
+
+    if (!range1_value) {
+      return null;
+    }
+
+    const value1 = parseFloat(range1_value);
+
+    // 範囲1で判定
+    let filtered = availableRules.filter(r => {
+      if (r.range1_min !== null && r.range1_max !== null) {
+        const min = parseFloat(r.range1_min);
+        const max = parseFloat(r.range1_max);
+        const minOk = r.range1_min_included ? (value1 >= min) : (value1 > min);
+        const maxOk = r.range1_max_included ? (value1 <= max) : (value1 < max);
+        return minOk && maxOk;
+      }
+      return false;
+    });
+
+    // 範囲2（名称値）でフィルター
+    if (range2_value) {
+      filtered = filtered.filter(r => r.range2_value === range2_value);
+    }
+
+    return filtered.length > 0 ? filtered[0] : null;
+  };
+
+  // 価格計算
+  const calculatePrice = (rule, pointCount) => {
+    if (!rule) return { baseFee: 0, pointFee: 0, total: 0 };
+
+    const baseFee = parseFloat(rule.base_fee || 0);
+    const pointFee = parseFloat(rule.point_fee || 0);
+    const total = baseFee + (pointFee * pointCount);
+
+    return { baseFee, pointFee, total };
+  };
+
+  // ルール確定して明細に追加
+  const handleAddItemWithRule = () => {
+    const { selectedService } = ruleSelection;
+
+    if (!selectedService) {
+      alert('サービスを選択してください');
+      return;
+    }
+
+    if (!newItem.item_name) {
+      alert('校正品名は必須です');
+      return;
+    }
+
+    // ルールマッチング
+    const matchedRule = selectedService.field === '一般'
+      ? matchGeneralRule()
+      : matchForceRule();
+
+    if (!matchedRule) {
+      alert('条件に一致するルールが見つかりませんでした');
+      return;
+    }
+
+    const price = calculatePrice(matchedRule, ruleSelection.point_count);
 
     setItems([...items, {
+      service_id: selectedService.service_id,
+      equipment_name: selectedService.equipment_name,
+      field: selectedService.field,
       ...newItem,
-      equipment_name: selectedService?.equipment_name || '',
-      field: selectedService?.field || '',
-      common_field: selectedService?.common_field || '',
-      common_number: selectedService?.common_number || '',
-      temp_id: Date.now() // 一時ID
+      ...ruleSelection,
+      matchedRule,
+      base_fee: price.baseFee,
+      point_fee: price.pointFee,
+      subtotal: price.total,
+      temp_id: Date.now()
     }]);
 
-    // フォームリセット
+    // リセット
+    resetSelection();
+  };
+
+  const resetSelection = () => {
+    setServiceSelection({
+      field_id: '',
+      equipment_name: '',
+      equipment_type1: '',
+      equipment_type2: '',
+      combination: '',
+      service_id: ''
+    });
+
+    setRuleSelection({
+      selectedService: null,
+      availableRules: [],
+      resolution: '',
+      range1_name: '',
+      range1_value: '',
+      range1_unit: '',
+      range2_name: '',
+      range2_value: '',
+      range2_unit: '',
+      matchedRule: null,
+      point_count: 1
+    });
+
     setNewItem({
-      service_id: '',
       item_name: '',
       manufacturer: '',
       model_number: '',
       serial_number: '',
       quantity: 1,
-      point_count: '',
-      measurement_range_min: '',
-      measurement_range_max: '',
-      measurement_unit: '',
-      capacity_value: '',
-      capacity_unit: '',
       notes: ''
     });
   };
@@ -103,90 +407,89 @@ function EstimateNew() {
     try {
       setLoading(true);
 
-      // 明細データを整形
-      const formattedItems = items.map(item => ({
-        service_id: parseInt(item.service_id),
-        item_name: item.item_name,
-        manufacturer: item.manufacturer || null,
-        model_number: item.model_number || null,
-        serial_number: item.serial_number || null,
-        quantity: parseInt(item.quantity) || 1,
-        point_count: item.point_count ? parseInt(item.point_count) : null,
-        measurement_range_min: item.measurement_range_min ? parseFloat(item.measurement_range_min) : null,
-        measurement_range_max: item.measurement_range_max ? parseFloat(item.measurement_range_max) : null,
-        measurement_unit: item.measurement_unit || null,
-        capacity_value: item.capacity_value ? parseFloat(item.capacity_value) : null,
-        capacity_unit: item.capacity_unit || null,
-        notes: item.notes || null
-      }));
-
       const requestData = {
         ...formData,
-        items: formattedItems
+        total_amount: items.reduce((sum, item) => sum + (item.subtotal || 0), 0),
+        status: 'draft'
       };
 
       const response = await calibrationApi.createRequest(requestData);
+      const requestId = response.data.data.request_id;
+
+      // 明細を登録
+      for (const item of items) {
+        await calibrationApi.createItem({
+          request_id: requestId,
+          service_id: item.service_id,
+          item_name: item.item_name,
+          manufacturer: item.manufacturer || '',
+          model_number: item.model_number || '',
+          serial_number: item.serial_number || '',
+          quantity: item.quantity,
+          point_count: item.point_count,
+          base_fee: item.base_fee,
+          point_fee: item.point_fee,
+          subtotal: item.subtotal,
+          notes: item.notes || ''
+        });
+      }
+
       alert('見積を作成しました');
-      navigate(`/estimates/${response.data.data.request_id}`);
+      navigate('/estimates');
     } catch (err) {
-      console.error('見積作成エラー:', err);
-      alert(`見積作成に失敗しました: ${err.response?.data?.error || err.message}`);
+      console.error('見積作成に失敗しました', err);
+      alert('見積作成に失敗しました: ' + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedService = services.find(s => s.service_id === parseInt(newItem.service_id));
+  if (loading) return <div>読み込み中...</div>;
 
   return (
     <div className="estimate-new">
-      <div className="page-header">
-        <h1>新規見積作成</h1>
-        <button onClick={() => navigate('/estimates')} className="btn">
-          キャンセル
-        </button>
-      </div>
+      <h1>新規見積作成</h1>
 
       <form onSubmit={handleSubmit}>
-        {/* 基本情報 */}
+        {/* 見積基本情報 */}
         <div className="form-card">
-          <h2>基本情報</h2>
+          <h2>見積基本情報</h2>
+
           <div className="form-group">
             <label>見積番号 *</label>
             <input
               type="text"
               value={formData.request_number}
               onChange={(e) => setFormData({ ...formData, request_number: e.target.value })}
-              placeholder="例: EST-2025-003"
               required
             />
           </div>
+
           <div className="form-group">
             <label>顧客名 *</label>
             <input
               type="text"
               value={formData.customer_name}
               onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-              placeholder="例: 株式会社サンプル"
               required
             />
           </div>
+
           <div className="form-group">
-            <label>依頼日 *</label>
+            <label>依頼日</label>
             <input
               type="date"
               value={formData.request_date}
               onChange={(e) => setFormData({ ...formData, request_date: e.target.value })}
-              required
             />
           </div>
+
           <div className="form-group">
             <label>備考</label>
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows="3"
-              placeholder="特記事項があれば入力してください"
+              rows={3}
             />
           </div>
         </div>
@@ -194,206 +497,470 @@ function EstimateNew() {
         {/* 明細追加フォーム */}
         <div className="form-card">
           <h2>明細追加</h2>
-          <div className="form-group">
-            <label>サービス *</label>
-            <select
-              value={newItem.service_id}
-              onChange={(e) => setNewItem({ ...newItem, service_id: e.target.value })}
-            >
-              <option value="">選択してください</option>
-              {services.map(service => (
-                <option key={service.service_id} value={service.service_id}>
-                  {service.common_field && service.common_number &&
-                    `[${service.common_field} ${service.common_number}] `}
-                  {service.equipment_name} ({service.field})
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label>校正品名 *</label>
-              <input
-                type="text"
-                value={newItem.item_name}
-                onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
-                placeholder="例: デジタルトルクレンチ"
-              />
-            </div>
-            <div className="form-group">
-              <label>メーカー</label>
-              <input
-                type="text"
-                value={newItem.manufacturer}
-                onChange={(e) => setNewItem({ ...newItem, manufacturer: e.target.value })}
-                placeholder="例: TOHNICHI"
-              />
-            </div>
-          </div>
+          {/* ステップ1: サービス選択（階層的絞り込み） */}
+          <fieldset className="form-section">
+            <legend>ステップ1: サービス選択</legend>
 
-          <div className="form-row">
             <div className="form-group">
-              <label>型式</label>
-              <input
-                type="text"
-                value={newItem.model_number}
-                onChange={(e) => setNewItem({ ...newItem, model_number: e.target.value })}
-                placeholder="例: CEM100N3X15D"
-              />
+              <label>分野 *</label>
+              <select
+                value={serviceSelection.field_id}
+                onChange={(e) => {
+                  setServiceSelection({
+                    field_id: e.target.value,
+                    equipment_name: '',
+                    equipment_type1: '',
+                    equipment_type2: '',
+                    combination: ''
+                  });
+                }}
+              >
+                <option value="">選択してください</option>
+                {availableOptions.fields.map(f => (
+                  <option key={f.field_id} value={f.field_id}>
+                    {f.field_name} ({f.revenue_category})
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="form-group">
-              <label>シリアル番号</label>
-              <input
-                type="text"
-                value={newItem.serial_number}
-                onChange={(e) => setNewItem({ ...newItem, serial_number: e.target.value })}
-                placeholder="例: S12345"
-              />
-            </div>
-          </div>
 
-          {selectedService && selectedService.requires_point_calc && (
-            <>
+            {serviceSelection.field_id && (
+              <div className="form-group">
+                <label>機器名 *</label>
+                <select
+                  value={serviceSelection.equipment_name}
+                  onChange={(e) => {
+                    setServiceSelection({
+                      ...serviceSelection,
+                      equipment_name: e.target.value,
+                      equipment_type1: '',
+                      equipment_type2: '',
+                      combination: ''
+                    });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {availableOptions.equipmentNames.map((name, idx) => (
+                    <option key={idx} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {serviceSelection.equipment_name && availableOptions.equipmentType1.length > 0 && (
+              <div className="form-group">
+                <label>機器種類1</label>
+                <select
+                  value={serviceSelection.equipment_type1}
+                  onChange={(e) => {
+                    setServiceSelection({
+                      ...serviceSelection,
+                      equipment_type1: e.target.value,
+                      equipment_type2: '',
+                      combination: ''
+                    });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {availableOptions.equipmentType1.map((type, idx) => (
+                    <option key={idx} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {serviceSelection.equipment_type1 && availableOptions.equipmentType2.length > 0 && (
+              <div className="form-group">
+                <label>機器種類2</label>
+                <select
+                  value={serviceSelection.equipment_type2}
+                  onChange={(e) => {
+                    setServiceSelection({
+                      ...serviceSelection,
+                      equipment_type2: e.target.value,
+                      combination: ''
+                    });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {availableOptions.equipmentType2.map((type, idx) => (
+                    <option key={idx} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {serviceSelection.equipment_name && availableOptions.combinations.length > 0 && (
+              <div className="form-group">
+                <label>組み合わせ</label>
+                <select
+                  value={serviceSelection.combination}
+                  onChange={(e) => {
+                    setServiceSelection({
+                      ...serviceSelection,
+                      combination: e.target.value
+                    });
+                  }}
+                >
+                  <option value="">選択してください</option>
+                  {availableOptions.combinations.map((comb, idx) => (
+                    <option key={idx} value={comb}>{comb}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div style={{ marginTop: '16px' }}>
+              絞り込み結果: {filteredServices.length}件のサービス
+              {filteredServices.length === 1 && (
+                <button
+                  type="button"
+                  onClick={handleServiceSelected}
+                  className="btn btn-primary"
+                  style={{ marginLeft: '16px' }}
+                >
+                  このサービスを選択
+                </button>
+              )}
+            </div>
+          </fieldset>
+
+          {/* ステップ2: ルール選択 */}
+          {ruleSelection.selectedService && (
+            <fieldset className="form-section">
+              <legend>ステップ2: 料金ルール選択</legend>
+
+              <p>選択されたサービス: <strong>{ruleSelection.selectedService.equipment_name}</strong></p>
+
+              {ruleSelection.selectedService.field === '一般' && (
+                <>
+                  {/* 一般分野のルール選択 */}
+                  <div className="form-group">
+                    <label>分解能</label>
+                    <select
+                      value={ruleSelection.resolution}
+                      onChange={(e) => setRuleSelection({ ...ruleSelection, resolution: e.target.value })}
+                    >
+                      <option value="">選択してください</option>
+                      {Array.from(new Set(ruleSelection.availableRules.map(r => r.resolution))).map((res, idx) => (
+                        <option key={idx} value={res}>{res}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>範囲1名称</label>
+                    <select
+                      value={ruleSelection.range1_name}
+                      onChange={(e) => setRuleSelection({ ...ruleSelection, range1_name: e.target.value })}
+                    >
+                      <option value="">選択してください</option>
+                      {Array.from(new Set(ruleSelection.availableRules.map(r => r.range1_name))).map((name, idx) => (
+                        <option key={idx} value={name}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>範囲1 値 *</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={ruleSelection.range1_value}
+                        onChange={(e) => setRuleSelection({ ...ruleSelection, range1_value: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>単位</label>
+                      <input
+                        type="text"
+                        value={ruleSelection.range1_unit}
+                        onChange={(e) => setRuleSelection({ ...ruleSelection, range1_unit: e.target.value })}
+                        placeholder="℃"
+                      />
+                    </div>
+                  </div>
+
+                  {ruleSelection.availableRules.some(r => r.range2_name) && (
+                    <>
+                      <div className="form-group">
+                        <label>範囲2名称</label>
+                        <select
+                          value={ruleSelection.range2_name}
+                          onChange={(e) => setRuleSelection({ ...ruleSelection, range2_name: e.target.value })}
+                        >
+                          <option value="">選択してください</option>
+                          {Array.from(new Set(ruleSelection.availableRules.map(r => r.range2_name).filter(n => n))).map((name, idx) => (
+                            <option key={idx} value={name}>{name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>範囲2 値</label>
+                          <input
+                            type="number"
+                            step="any"
+                            value={ruleSelection.range2_value}
+                            onChange={(e) => setRuleSelection({ ...ruleSelection, range2_value: e.target.value })}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label>単位</label>
+                          <input
+                            type="text"
+                            value={ruleSelection.range2_unit}
+                            onChange={(e) => setRuleSelection({ ...ruleSelection, range2_unit: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
+              {ruleSelection.selectedService.field === '力学' && (
+                <>
+                  {/* 力学分野のルール選択 */}
+                  <div className="form-group">
+                    <label>範囲1名称</label>
+                    <select
+                      value={ruleSelection.range1_name}
+                      onChange={(e) => setRuleSelection({ ...ruleSelection, range1_name: e.target.value })}
+                    >
+                      <option value="">選択してください</option>
+                      {Array.from(new Set(ruleSelection.availableRules.map(r => r.range1_name))).map((name, idx) => (
+                        <option key={idx} value={name}>{name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>範囲1 値 *</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={ruleSelection.range1_value}
+                        onChange={(e) => setRuleSelection({ ...ruleSelection, range1_value: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>単位</label>
+                      <input
+                        type="text"
+                        value={ruleSelection.range1_unit}
+                        onChange={(e) => setRuleSelection({ ...ruleSelection, range1_unit: e.target.value })}
+                        placeholder="kN"
+                      />
+                    </div>
+                  </div>
+
+                  {ruleSelection.availableRules.some(r => r.range2_name) && (
+                    <>
+                      <div className="form-group">
+                        <label>範囲2名称</label>
+                        <select
+                          value={ruleSelection.range2_name}
+                          onChange={(e) => setRuleSelection({ ...ruleSelection, range2_name: e.target.value })}
+                        >
+                          <option value="">選択してください</option>
+                          {Array.from(new Set(ruleSelection.availableRules.map(r => r.range2_name).filter(n => n))).map((name, idx) => (
+                            <option key={idx} value={name}>{name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>範囲2 値</label>
+                        <select
+                          value={ruleSelection.range2_value}
+                          onChange={(e) => setRuleSelection({ ...ruleSelection, range2_value: e.target.value })}
+                        >
+                          <option value="">選択してください</option>
+                          {Array.from(new Set(ruleSelection.availableRules.map(r => r.range2_value).filter(v => v))).map((val, idx) => (
+                            <option key={idx} value={val}>{val}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+
               <div className="form-group">
                 <label>点数 *</label>
                 <input
                   type="number"
-                  value={newItem.point_count}
-                  onChange={(e) => setNewItem({ ...newItem, point_count: e.target.value })}
-                  placeholder="例: 5"
                   min="1"
+                  value={ruleSelection.point_count}
+                  onChange={(e) => setRuleSelection({ ...ruleSelection, point_count: parseInt(e.target.value) })}
+                  required
                 />
               </div>
 
-              {selectedService.category === '一般' && (
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>測定範囲 最小値</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={newItem.measurement_range_min}
-                      onChange={(e) => setNewItem({ ...newItem, measurement_range_min: e.target.value })}
-                      placeholder="例: 10"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>測定範囲 最大値</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={newItem.measurement_range_max}
-                      onChange={(e) => setNewItem({ ...newItem, measurement_range_max: e.target.value })}
-                      placeholder="例: 100"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>単位</label>
-                    <input
-                      type="text"
-                      value={newItem.measurement_unit}
-                      onChange={(e) => setNewItem({ ...newItem, measurement_unit: e.target.value })}
-                      placeholder="例: N·m"
-                    />
-                  </div>
-                </div>
-              )}
+              {/* 価格プレビュー */}
+              {(() => {
+                const matched = ruleSelection.selectedService.field === '一般'
+                  ? matchGeneralRule()
+                  : matchForceRule();
 
-              {selectedService.category === '力学' && (
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>能力値</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={newItem.capacity_value}
-                      onChange={(e) => setNewItem({ ...newItem, capacity_value: e.target.value })}
-                      placeholder="例: 100"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>能力単位</label>
-                    <input
-                      type="text"
-                      value={newItem.capacity_unit}
-                      onChange={(e) => setNewItem({ ...newItem, capacity_unit: e.target.value })}
-                      placeholder="例: kN"
-                    />
-                  </div>
-                </div>
-              )}
-            </>
+                if (matched && ruleSelection.point_count) {
+                  const price = calculatePrice(matched, ruleSelection.point_count);
+                  return (
+                    <div style={{ marginTop: '16px', padding: '12px', background: '#f0f0f0', borderRadius: '4px' }}>
+                      <h4>料金プレビュー</h4>
+                      <p>基本料金: ¥{price.baseFee.toLocaleString()}</p>
+                      <p>点数料金: ¥{price.pointFee.toLocaleString()} × {ruleSelection.point_count}点</p>
+                      <p><strong>合計: ¥{price.total.toLocaleString()}</strong></p>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
+            </fieldset>
           )}
 
-          <div className="form-group">
-            <label>数量</label>
-            <input
-              type="number"
-              value={newItem.quantity}
-              onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
-              min="1"
-            />
-          </div>
+          {/* ステップ3: 明細情報 */}
+          {ruleSelection.selectedService && (
+            <fieldset className="form-section">
+              <legend>ステップ3: 明細情報</legend>
 
-          <button type="button" onClick={handleAddItem} className="btn btn-primary">
-            明細に追加
-          </button>
+              <div className="form-group">
+                <label>校正品名 *</label>
+                <input
+                  type="text"
+                  value={newItem.item_name}
+                  onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label>メーカー</label>
+                <input
+                  type="text"
+                  value={newItem.manufacturer}
+                  onChange={(e) => setNewItem({ ...newItem, manufacturer: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>型番</label>
+                <input
+                  type="text"
+                  value={newItem.model_number}
+                  onChange={(e) => setNewItem({ ...newItem, model_number: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>シリアル番号</label>
+                <input
+                  type="text"
+                  value={newItem.serial_number}
+                  onChange={(e) => setNewItem({ ...newItem, serial_number: e.target.value })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>数量</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newItem.quantity}
+                  onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>備考</label>
+                <textarea
+                  value={newItem.notes}
+                  onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
+                  rows={2}
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddItemWithRule}
+                className="btn btn-primary"
+              >
+                明細を追加
+              </button>
+            </fieldset>
+          )}
         </div>
 
-        {/* 追加済み明細一覧 */}
+        {/* 明細リスト */}
         {items.length > 0 && (
           <div className="form-card">
-            <h2>追加済み明細（{items.length}件）</h2>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>サービス</th>
-                  <th>校正品名</th>
-                  <th>メーカー</th>
-                  <th>型式</th>
-                  <th>点数</th>
-                  <th>数量</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item, index) => (
-                  <tr key={item.temp_id}>
-                    <td>{index + 1}</td>
-                    <td>
-                      {item.common_field && item.common_number &&
-                        `[${item.common_field} ${item.common_number}] `}
-                      {item.equipment_name}
-                    </td>
-                    <td>{item.item_name}</td>
-                    <td>{item.manufacturer || '-'}</td>
-                    <td>{item.model_number || '-'}</td>
-                    <td>{item.point_count || '-'}</td>
-                    <td>{item.quantity}</td>
-                    <td>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveItem(item.temp_id)}
-                        className="btn btn-sm btn-danger"
-                      >
-                        削除
-                      </button>
-                    </td>
+            <h2>見積明細一覧</h2>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>校正品名</th>
+                    <th>サービス</th>
+                    <th>点数</th>
+                    <th>基本料金</th>
+                    <th>点数料金</th>
+                    <th>小計</th>
+                    <th>操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {items.map((item) => (
+                    <tr key={item.temp_id}>
+                      <td>{item.item_name}</td>
+                      <td>{item.equipment_name}</td>
+                      <td>{item.point_count}</td>
+                      <td>¥{item.base_fee.toLocaleString()}</td>
+                      <td>¥{item.point_fee.toLocaleString()}</td>
+                      <td>¥{item.subtotal.toLocaleString()}</td>
+                      <td>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(item.temp_id)}
+                          className="btn btn-sm btn-danger"
+                        >
+                          削除
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colSpan={5} style={{ textAlign: 'right', fontWeight: 'bold' }}>合計</td>
+                    <td style={{ fontWeight: 'bold' }}>
+                      ¥{items.reduce((sum, item) => sum + item.subtotal, 0).toLocaleString()}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
         )}
 
         {/* 送信ボタン */}
         <div className="form-actions">
           <button type="submit" className="btn btn-primary" disabled={loading || items.length === 0}>
-            {loading ? '作成中...' : '見積を作成'}
+            {loading ? '保存中...' : '見積を作成'}
           </button>
-          <button type="button" onClick={() => navigate('/estimates')} className="btn">
+          <button
+            type="button"
+            onClick={() => navigate('/estimates')}
+            className="btn"
+          >
             キャンセル
           </button>
         </div>
